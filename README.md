@@ -1,6 +1,6 @@
-# Azure AI Foundry — Web Search Demo
+# Microsoft Foundry — Web Search Demo
 
-Demonstrates two approaches to adding web search capabilities to an AI application using Azure AI Foundry:
+Demonstrates two approaches to adding web search capabilities to an AI application using Microsoft Foundry:
 
 | Script | Approach | Status | Best for |
 |--------|----------|--------|----------|
@@ -13,11 +13,11 @@ Both demos run a set of queries that require fresh web data, extract citations, 
 
 - **Python 3.10+**
 - **Azure subscription** with:
-  - An [Azure AI Foundry](https://ai.azure.com/) project with a configured endpoint
+  - A [Microsoft Foundry](https://ai.azure.com/) project with a configured endpoint
   - A deployed model (e.g., `gpt-4.1`)
   - [DefaultAzureCredential](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential) configured (e.g., `az login`)
 - **For Bing Grounding demo only:**
-  - A [Grounding with Bing Search](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/bing-tools) resource created and connected to your Foundry project
+  - A [Grounding with Bing Search](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/bing-tools) resource created and connected to your Foundry project. Can be connected to the project in the Classic Foundry Portal.
 
 ## Setup
 
@@ -79,7 +79,7 @@ python bing-grounding-demo.py
 python setup-bing-agent.py --delete
 ```
 
-The agent is created once and persists between runs. This avoids cold-start overhead on every invocation and lets you measure steady-state latency.
+The agent is created once and persists between runs. This enables the evaluation of cold-start latency on the first invocation and compare steady-state latency.
 
 **Output includes:**
 - Per-query latency with cold-start labeling
@@ -91,7 +91,7 @@ The agent is created once and persists between runs. This avoids cold-start over
 
 This demo uses the `web_search_preview` tool directly on the Responses API — no agent setup required. It compares a non-reasoning model against a reasoning model.
 
-> **Note:** `web_search_preview` is currently in preview with no announced GA timeline.
+> **Note:** `web_search_preview` is currently in preview.
 
 ```bash
 python responses-web-search-demo.py
@@ -123,14 +123,12 @@ output/responses-web-search-20260305-085013.txt
 
 ## Key Design Decisions
 
-- **Persistent agent** — The Bing grounding demo separates agent creation (`setup-bing-agent.py`) from querying (`bing-grounding-demo.py`). This avoids cold-start on every run and mirrors how a production agent would be deployed.
 - **`tool_choice="required"`** — Forces the agent to invoke Bing Search on every query, ensuring consistent grounding behavior.
 - **Strong agent instructions** — The system prompt explicitly directs the agent to always search and never answer from training data alone.
 - **Code-first, no portal** — Everything is done via the Python SDK. No Foundry portal UI interaction required — works behind private networks.
-- **Citation handling** — Bing grounding injects `【n:m†source】` markers into response text and provides structured `url_citation` annotations. The demo extracts citations from annotations and strips the markers for clean output.
 
 ## References
 
 - [Grounding agents with Bing Search tools](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/bing-tools)
-- [Azure AI Foundry Responses API](https://learn.microsoft.com/en-us/azure/foundry/reference/reference-model-inference-responses)
-- [azure-ai-projects Python SDK](https://pypi.org/project/azure-ai-projects/)
+- [Microsoft Foundry Responses API - Web Search](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/web-search)
+- [azure-ai-projects Python SDK](https://learn.microsoft.com/en-us/python/api/overview/azure/ai-projects-readme?view=azure-python-preview)
