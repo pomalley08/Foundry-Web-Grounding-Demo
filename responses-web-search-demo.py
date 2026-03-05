@@ -1,24 +1,37 @@
 """
-Web Search Responses API Demo
-Compare non-reasoning (gpt-4.1) vs reasoning (gpt-5.2) web search modes.
+Web Search Responses API Demo  (Preview)
+Compare non-reasoning vs reasoning web search modes using the Responses API
+web_search_preview tool.
+
+This is the customer's preferred long-term path — direct Responses API with
+built-in web search — but web_search_preview is still in preview with no GA
+timeline. See bing-grounding-demo.py for the GA alternative.
 
 Uses the Azure AI Foundry Responses API with the web_search_preview tool.
 Auth: Entra ID via DefaultAzureCredential.
+Required env vars (or .env file):
+    FOUNDRY_PROJECT_ENDPOINT
+    NON_REASONING_MODEL          (default: gpt-4.1)
+    REASONING_MODEL              (default: gpt-5-mini)
 """
 
+import os
 import time
 import textwrap
 
+from dotenv import load_dotenv
 from azure.identity import DefaultAzureCredential
 from azure.ai.projects import AIProjectClient
+
+load_dotenv()
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-ENDPOINT = "https://new-foundry-rgn10.services.ai.azure.com/api/projects/new-foundry"
+ENDPOINT = os.environ["FOUNDRY_PROJECT_ENDPOINT"]
 
-NON_REASONING_MODEL = "gpt-4.1"
-REASONING_MODEL = "gpt-5-mini"
+NON_REASONING_MODEL = os.environ.get("NON_REASONING_MODEL", "gpt-4.1")
+REASONING_MODEL = os.environ.get("REASONING_MODEL", "gpt-5-mini")
 
 DEMO_QUERIES = [
     "What were the results of the most recent Formula 1 Grand Prix?",
