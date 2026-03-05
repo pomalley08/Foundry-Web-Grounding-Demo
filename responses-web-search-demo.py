@@ -16,14 +16,48 @@ Required env vars (or .env file):
 """
 
 import os
+import sys
 import time
 import textwrap
+from datetime import datetime
+from pathlib import Path
 
 from dotenv import load_dotenv
 from azure.identity import DefaultAzureCredential
 from azure.ai.projects import AIProjectClient
 
 load_dotenv()
+
+
+# ---------------------------------------------------------------------------
+# Tee — write to both stdout and a log file
+# ---------------------------------------------------------------------------
+class Tee:
+    """Context manager that duplicates stdout to a file."""
+
+    def __init__(self, filepath: Path):
+        self.filepath = filepath
+        self._file = None
+        self._original_stdout = None
+
+    def __enter__(self):
+        self.filepath.parent.mkdir(parents=True, exist_ok=True)
+        self._file = open(self.filepath, "w", encoding="utf-8")
+        self._original_stdout = sys.stdout
+        sys.stdout = self
+        return self
+
+    def __exit__(self, *args):
+        sys.stdout = self._original_stdout
+        self._file.close()
+
+    def write(self, data):
+        self._original_stdout.write(data)
+        self._file.write(data)
+
+    def flush(self):
+        self._original_stdout.flush()
+        self._file.flush()
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -179,39 +213,45 @@ def print_summary_table(results: list[dict]) -> None:
 # Main
 # ---------------------------------------------------------------------------
 def main():
-    print("=" * 70)
-    print("Web Search Responses API Demo")
-    print(f"Non-reasoning model: {NON_REASONING_MODEL}")
-    print(f"Reasoning model:     {REASONING_MODEL}")
-    print(f"Queries:             {len(DEMO_QUERIES)}")
-    print("=" * 70)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    outfile = Path("output") / f"responses-web-search-{stamp}.txt"
 
-    client = get_client()
-    all_results: list[dict] = []
+    with Tee(outfile):
+        print("=" * 70)
+        print("Web Search Responses API Demo")
+        print(f"Non-reasoning model: {NON_REASONING_MODEL}")
+        print(f"Reasoning model:     {REASONING_MODEL}")
+        print(f"Queries:             {len(DEMO_QUERIES)}")
+        print("=" * 70)
 
-    for i, query in enumerate(DEMO_QUERIES, 1):
-        print(f"\n{'─' * 70}")
-        print(f"Query {i}/{len(DEMO_QUERIES)}: {query}")
-        print(f"{'─' * 70}")
+        client = get_client()
+        all_results: list[dict] = []
 
-        for model in [NON_REASONING_MODEL, REASONING_MODEL]:
-            print(f"\n  ▶ Running with {model} …")
-            try:
-                result = run_web_search(client, model, query)
-                all_results.append(result)
-                print_result(result)
-            except Exception as e:
-                print(f"  ✗ Error with {model}: {e}\n")
-                all_results.append({
-                    "model": model,
-                    "query": query,
-                    "latency_s": 0,
-                    "output_text": f"ERROR: {e}",
-                    "citations": [],
-                    "search_count": 0,
-                })
+        for i, query in enumerate(DEMO_QUERIES, 1):
+            print(f"\n{'─' * 70}")
+            print(f"Query {i}/{len(DEMO_QUERIES)}: {query}")
+            print(f"{'─' * 70}")
 
-    print_summary_table(all_results)
+            for model in [NON_REASONING_MODEL, REASONING_MODEL]:
+                print(f"\n  ▶ Running with {model} …")
+                try:
+                    result = run_web_search(client, model, query)
+                    all_results.append(result)
+                    print_result(result)
+                except Exception as e:
+                    print(f"  ✗ Error with {model}: {e}\n")
+                    all_results.append({
+                        "model": model,
+                        "query": query,
+                        "latency_s": 0,
+                        "output_text": f"ERROR: {e}",
+                        "citations": [],
+                        "search_count": 0,
+                    })
+
+        print_summary_table(all_results)
+
+    print(f"\nOutput saved to {outfile}")
 
 
 if __name__ == "__main__":

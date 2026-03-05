@@ -18,15 +18,49 @@ Required env vars (or .env file):
 """
 
 import os
+import sys
 import time
 import textwrap
 import statistics
+from datetime import datetime
+from pathlib import Path
 
 from dotenv import load_dotenv
 from azure.identity import DefaultAzureCredential
 from azure.ai.projects import AIProjectClient
 
 load_dotenv()
+
+
+# ---------------------------------------------------------------------------
+# Tee — write to both stdout and a log file
+# ---------------------------------------------------------------------------
+class Tee:
+    """Context manager that duplicates stdout to a file."""
+
+    def __init__(self, filepath: Path):
+        self.filepath = filepath
+        self._file = None
+        self._original_stdout = None
+
+    def __enter__(self):
+        self.filepath.parent.mkdir(parents=True, exist_ok=True)
+        self._file = open(self.filepath, "w", encoding="utf-8")
+        self._original_stdout = sys.stdout
+        sys.stdout = self
+        return self
+
+    def __exit__(self, *args):
+        sys.stdout = self._original_stdout
+        self._file.close()
+
+    def write(self, data):
+        self._original_stdout.write(data)
+        self._file.write(data)
+
+    def flush(self):
+        self._original_stdout.flush()
+        self._file.flush()
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -211,40 +245,46 @@ def print_summary(all_results: list[dict]) -> None:
 # Main
 # ---------------------------------------------------------------------------
 def main():
-    print("=" * 70)
-    print("Bing Grounding Agent Demo  (GA – Foundry Agent Service)")
-    print("=" * 70)
-    print(f"  Agent:     {AGENT_NAME}")
-    print(f"  Endpoint:  {ENDPOINT}")
-    print(f"  Queries:   {len(DEMO_QUERIES)}")
-    print(f"  Approach:  Responses API + agent_reference (code-first, no portal)")
-    print("=" * 70)
-    print(f"\n  Tip: Run this script multiple times to compare cold-start vs")
-    print(f"  warm latency. Create the agent first with: setup-bing-agent.py\n")
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    outfile = Path("output") / f"bing-grounding-{stamp}.txt"
 
-    openai_client = get_openai_client()
-    all_results: list[dict] = []
+    with Tee(outfile):
+        print("=" * 70)
+        print("Bing Grounding Agent Demo  (GA – Foundry Agent Service)")
+        print("=" * 70)
+        print(f"  Agent:     {AGENT_NAME}")
+        print(f"  Endpoint:  {ENDPOINT}")
+        print(f"  Queries:   {len(DEMO_QUERIES)}")
+        print(f"  Approach:  Responses API + agent_reference (code-first, no portal)")
+        print("=" * 70)
+        print(f"\n  Tip: Run this script multiple times to compare cold-start vs")
+        print(f"  warm latency. Create the agent first with: setup-bing-agent.py\n")
 
-    for i, query in enumerate(DEMO_QUERIES, 1):
-        print(f"{'─' * 70}")
-        print(f"Query {i}/{len(DEMO_QUERIES)}: {query}")
-        print(f"{'─' * 70}")
+        openai_client = get_openai_client()
+        all_results: list[dict] = []
 
-        try:
-            result = run_query(openai_client, query)
-            all_results.append(result)
-            print_result(result, is_first=(i == 1))
-        except Exception as e:
-            print(f"  ✗ Error: {e}\n")
-            all_results.append({
-                "query": query,
-                "latency_s": 0,
-                "output_text": f"ERROR: {e}",
-                "citations": [],
-                "search_invoked": False,
-            })
+        for i, query in enumerate(DEMO_QUERIES, 1):
+            print(f"{'─' * 70}")
+            print(f"Query {i}/{len(DEMO_QUERIES)}: {query}")
+            print(f"{'─' * 70}")
 
-    print_summary(all_results)
+            try:
+                result = run_query(openai_client, query)
+                all_results.append(result)
+                print_result(result, is_first=(i == 1))
+            except Exception as e:
+                print(f"  ✗ Error: {e}\n")
+                all_results.append({
+                    "query": query,
+                    "latency_s": 0,
+                    "output_text": f"ERROR: {e}",
+                    "citations": [],
+                    "search_invoked": False,
+                })
+
+        print_summary(all_results)
+
+    print(f"\nOutput saved to {outfile}")
 
 
 if __name__ == "__main__":
