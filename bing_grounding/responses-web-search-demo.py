@@ -1,13 +1,9 @@
 """
-Web Search Responses API Demo  (Preview)
+Web Search Responses API Demo  (GA)
 Compare non-reasoning vs reasoning web search modes using the Responses API
-web_search_preview tool.
+web_search tool.
 
-This is the customer's preferred long-term path — direct Responses API with
-built-in web search — but web_search_preview is still in preview with no GA
-timeline. See bing-grounding-demo.py for the GA alternative.
-
-Uses the Azure AI Foundry Responses API with the web_search_preview tool.
+Uses the Azure AI Foundry Responses API with the web_search tool.
 Auth: Entra ID via DefaultAzureCredential.
 Required env vars (or .env file):
     FOUNDRY_PROJECT_ENDPOINT
@@ -74,7 +70,7 @@ DEMO_QUERIES = [
     "What is the current price of Bitcoin and how has it changed in the last 24 hours?",
 ]
 
-WEB_SEARCH_TOOL = {"type": "web_search_preview"}
+WEB_SEARCH_TOOL = {"type": "web_search"}
 
 OUTPUT_PREVIEW_LEN = 500  # chars to show per response
 MAX_RETRIES = 3
@@ -218,7 +214,7 @@ def main():
 
     with Tee(outfile):
         print("=" * 70)
-        print("Web Search Responses API Demo")
+        print("Web Search Responses API Demo (GA)")
         print(f"Non-reasoning model: {NON_REASONING_MODEL}")
         print(f"Reasoning model:     {REASONING_MODEL}")
         print(f"Queries:             {len(DEMO_QUERIES)}")
