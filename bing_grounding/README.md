@@ -5,7 +5,7 @@ Demonstrates two approaches to adding web search capabilities to an AI applicati
 | Script | Approach | Status | Best for |
 |--------|----------|--------|----------|
 | `bing-grounding-demo.py` | Bing Grounding via Foundry Agent Service | **GA** | Production use today |
-| `responses-web-search-demo.py` | Responses API `web_search_preview` tool | Preview | Simpler integration (when GA) |
+| `responses-web-search-demo.py` | Responses API `web_search` tool | **GA** | Simpler integration, no agent setup |
 
 Both demos run a set of queries that require fresh web data, extract citations, measure latency, and save results to timestamped files in `output/`.
 
@@ -87,11 +87,9 @@ The agent is created once and persists between runs. This enables the evaluation
 - Citation extraction from Bing grounding annotations
 - Summary table with consistency analysis (search rate, citation rate)
 
-### Responses API Web Search Demo (Preview)
+### Responses API Web Search Demo (GA)
 
-This demo uses the `web_search_preview` tool directly on the Responses API — no agent setup required. It compares a non-reasoning model against a reasoning model.
-
-> **Note:** `web_search_preview` is currently in preview.
+This demo uses the `web_search` tool directly on the Responses API — no agent setup required. It compares a non-reasoning model against a reasoning model.
 
 ```bash
 python responses-web-search-demo.py
@@ -115,7 +113,7 @@ output/responses-web-search-20260305-085013.txt
 ```
 ├── setup-bing-agent.py             # Create/delete the Bing-grounded agent
 ├── bing-grounding-demo.py          # Query runner for Bing grounding (GA)
-├── responses-web-search-demo.py    # Responses API web_search_preview (Preview)
+├── responses-web-search-demo.py    # Responses API web_search (GA)
 ├── requirements.txt                # Python dependencies (uses --pre for SDK)
 ├── .env.sample                     # Environment variable template
 └── output/                         # Auto-created; timestamped result files
